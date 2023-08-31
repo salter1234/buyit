@@ -10,6 +10,7 @@ from linebot.models import(
     MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, StickerMessage, FollowEvent
 )
 from linebot.models import *
+from models.cart import Cart
 from models.database import db_session
 from models.user import Users
 
@@ -88,12 +89,41 @@ def handle_message(event):
     get_or_create_user(event.source.user_id)
     
     message_text = str(event.message.text).lower()
-
+    cart = Cart(user_id = event.source.user_id)
+    message = None
     ##################使用說明 選單 油價查詢###############
     if message_text == '@使用說明':
         about_us_event(event)
     elif message_text =='我想訂購商品':
         message = Products.list_all()
+
+    elif "i'd like to have" in message_text:
+        product_name = message_text.split(',')[0]
+        num_item = message_text.split(':')[1]
+        product = db_session.query(Products).filter(Products.name.ilike(product_name)).first()
+
+        if product:
+            cart.add(product=product_name, num=num_item)
+
+            confirm_template = ConfirmTemplate(
+                text= 'Sure, {} {}, anything else?'.format(num_item, product_name),
+                actions=[
+                    MessageAction(label='Add', text='add'),
+                    MessageAction(label="That's it", text="That's it")
+                ])
+            
+            message = TemplateSendMessage(alt_text='anything else?', template=confirm_template)
+
+        else:
+            message = TextSendMessage(text="Sorry, We don't have {}.".format(product_name))
+
+        print(cart.bucket())
+    elif message_text in ['my cart', 'cart', "that's it"]:
+
+        if cart.bucket():
+            message = cart.display()
+        else:
+            message = TextSendMessage(text='Your cart is empty now.')
     if message:
         line_bot_api.reply_message(
         event.reply_token, 
