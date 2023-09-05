@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer
 from linebot.models import *
-from models.database import Base, db_session
+from database import Base, db_session
 from urllib.parse import quote
 
 class Products(Base):
@@ -58,7 +58,7 @@ class Products(Base):
                             style='primary',
                             color='#1DB446',
                             action=URIAction(label='Add to Cart',
-                                             uri='line://oaMessage/{base_id}/?{message}'.format(base_id='@264fvpez',
+                                             uri='line://oaMessage/{base_id}/?{message}'.format(base_id='@255iqrra',
                                                                                                 message=quote("{product}, I'd like to have:".format(product=product.name)))),
                         )
                     ]
